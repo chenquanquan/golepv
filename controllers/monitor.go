@@ -25,7 +25,7 @@ type MonitorClient struct {
 
 var (
 	mclients   = make(map[*websocket.Conn]MonitorClient) // Client list
-	mbroadcast = make(chan bool)                         // New message flag
+	//mbroadcast = make(chan bool)                         // New message flag
 )
 
 func monitorServer(monitor MonitorClient) {
@@ -59,6 +59,7 @@ func monitorServer(monitor MonitorClient) {
 			}
 		}
 
+		result["time"] = time.Now().UnixNano()
 
 		client := monitor.Conn
 		err := client.WriteJSON(result)

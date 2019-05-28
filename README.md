@@ -4,7 +4,6 @@ This project is to re-implement [LEPV](https://github.com/linuxep/lepv) with gol
 
 ## Preferred development environment
 - Windows/Mac OX/Linux, either works
-- IDE: Pycharm Community
 
 ## Technology Keywords
 - Git
@@ -15,7 +14,7 @@ This project is to re-implement [LEPV](https://github.com/linuxep/lepv) with gol
 - Web charts
 - WebSocket
 
-- Software Tools
+## Software Tools
     1. Golang
    
 ## Start
@@ -34,3 +33,8 @@ $ golepv
 3. Open browser [127.0.0.1:8080](http://127.0.0.1:8080)
 
 
+## TODO
+
+* Memory Pss Donut Chart
+* I/O Top Table
+* Flame Graph

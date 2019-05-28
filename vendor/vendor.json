@@ -57,36 +57,6 @@
 			"revisionTime": "2019-05-18T01:38:09Z"
 		},
 		{
-			"checksumSHA1": "umw2i6dGTaGg6FOyYanyGwdgthU=",
-			"path": "github.com/chenquanquan/golepv",
-			"revision": "63b54c69e383ede77dfba062708b23f48fb28825",
-			"revisionTime": "2019-05-28T10:13:24Z"
-		},
-		{
-			"checksumSHA1": "d5lBbvfEARTuq+FDGlJwU6DkszI=",
-			"path": "github.com/chenquanquan/golepv/controllers",
-			"revision": "63b54c69e383ede77dfba062708b23f48fb28825",
-			"revisionTime": "2019-05-28T10:13:24Z"
-		},
-		{
-			"checksumSHA1": "b8PpxH+u5aWMpknMrwvPEjcNJWw=",
-			"path": "github.com/chenquanquan/golepv/models",
-			"revision": "63b54c69e383ede77dfba062708b23f48fb28825",
-			"revisionTime": "2019-05-28T10:13:24Z"
-		},
-		{
-			"checksumSHA1": "+U/XQqhPoPyKQUH2LKwUG5lNOjE=",
-			"path": "github.com/chenquanquan/golepv/routers",
-			"revision": "63b54c69e383ede77dfba062708b23f48fb28825",
-			"revisionTime": "2019-05-28T10:13:24Z"
-		},
-		{
-			"checksumSHA1": "UIDkfdU6Eg87DS+Detf+EN/7PQs=",
-			"path": "github.com/chenquanquan/golepv/tests",
-			"revision": "63b54c69e383ede77dfba062708b23f48fb28825",
-			"revisionTime": "2019-05-28T10:13:24Z"
-		},
-		{
 			"checksumSHA1": "yIkYzW7bzAD81zHyuCNmEj4+oxQ=",
 			"path": "github.com/gopherjs/gopherjs/js",
 			"revision": "3e4dfb77656c424b6d1196a4d5fed0fcf63677cc",

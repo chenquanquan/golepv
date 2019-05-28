@@ -40,7 +40,7 @@ func IoStatus(client string) map[string]interface{} {
 	stat_ret["data"] = status
 	stat_ret["raw_ret"] = response_lines
 	status["disks"] = disks
-	status["lepdDuration"] = end_time.Nanosecond() - start_time.Nanosecond()
+	status["lepdDuration"] = end_time.UnixNano() - start_time.UnixNano()
 	status["diskCount"] = 0
 
 	for _, line := range value_line {
@@ -64,7 +64,7 @@ func IoStatus(client string) map[string]interface{} {
 
 	end_time_2 := time.Now()
 
-	status["lepvParsingDuration"] = end_time_2.Nanosecond() - start_time.Nanosecond()
+	status["lepvParsingDuration"] = end_time_2.UnixNano() - start_time.UnixNano()
 
 	return stat_ret
 }

@@ -671,7 +671,13 @@
 
     <!--triggered when the user specifies the LEPD server and click the start button.-->
     <script>
+    var flag = 0;
+
       function startWatching(specifiedServer) {
+          if (flag != 0) {
+              return;
+          }
+          flag = 1;
 
         if ( !specifiedServer) {
           return;
@@ -762,6 +768,7 @@
                 var chart = chartList[k]
                 var response = result[chart.socket_message_key];
 
+                console.log(result["time"])
                 if (response != null) {
                     var copy = response;
                     chart.updateChartData(copy);
