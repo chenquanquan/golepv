@@ -754,7 +754,7 @@
             cpuStatDonutChart,cpuStatIdleChart,cpuStatUserGroupChart,cpuIrqGroupChart,
             cpuIrqChart,cpuNettxIrqChart,cpuNetrxIrqChart,cputaskletIrqChart,cpuhrtimerIrqChart,
             cpuAvgloadChart,cpuTopTable,memoryChart,memoryStatTable,memoryFreePssStatChart,
-            memoryPssStatChart,ioStatChart,ioTopTable, perfCpuTable
+            memoryPssStatChart,ioStatChart,ioTopTable, perfCpuTable, perfFlameGraph
         };
 
         var ws = new WebSocket('ws://' +
@@ -768,7 +768,6 @@
                 var chart = chartList[k]
                 var response = result[chart.socket_message_key];
 
-                console.log(result["time"])
                 if (response != null) {
                     var copy = response;
                     chart.updateChartData(copy);

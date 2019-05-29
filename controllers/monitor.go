@@ -24,7 +24,7 @@ type MonitorClient struct {
 }
 
 var (
-	mclients   = make(map[*websocket.Conn]MonitorClient) // Client list
+	mclients = make(map[*websocket.Conn]MonitorClient) // Client list
 	//mbroadcast = make(chan bool)                         // New message flag
 )
 

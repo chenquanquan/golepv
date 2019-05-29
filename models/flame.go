@@ -1,45 +1,41 @@
 package models
 
 import (
-	//"log"
+	"log"
 	"strings"
 )
 
-func _createJson(line []string, value int, children_list []interface{}) []interface{} {
+func _createJson(line []string, value int, list []map[string]interface{}) []map[string]interface{} {
 	if len(line) == 0 {
 		return nil
 	}
 
-	//flag := 0
-	//for _, children := range children_list {
-	//	item, err := children.(map[string]interface{})
-	//	log.Println(err)
-	//	if item["name"] == line[0] {
-	//		flag++
-	//		v := item["value"].(int)
-	//		v += value
-	//		item["value"] = v
-	//		item["children"] = _createJson(line[1:], value, item["children"].([]interface{}))
-	//		break;
-	//	}
-	//}
+	name := line[0]
+	flag := 0
 
-	//if flag == 0 {
-	//	dict := make(map[string]interface{})
-	//	dict["name"] = line[0]
-	//	dict["value"] = value
-	//	dict["children"] = nil
-	//	children_list = append(children_list, dict)
-	//	children_list[len(children_list) - 1] = _createJson(line[1:], value, dict["children"])
-	//}
+	for i := range list {
+		dict := list[i]
+		if dict["name"] == name {
+			flag++
+			count := dict["value"].(int)
+			count += value
+			dict["value"] = count
+			dict["children"] = _createJson(line[1:], value, dict["children"].([]map[string]interface{}))
+			break
+		}
 
-	dict := make(map[string]interface{})
-	dict["name"] = line[0]
-	dict["value"] = value
-	dict["children"] = _createJson(line[1:], value, nil)
-	children_list = append(children_list, dict)
+	}
 
-	return children_list
+	if flag == 0 {
+		dict := make(map[string]interface{})
+		dict["value"] = value
+		dict["name"] = name
+		dict["children"] = _createJson(line[1:], value, nil)
+
+		list = append(list, dict)
+	}
+
+	return list
 
 }
 
@@ -47,7 +43,7 @@ func flameBurner(input []string) interface{} {
 	separate := "@"
 	var list_for_flame []string
 	dict_for_flame := make(map[string]interface{})
-	var children_list []interface{}
+	children_list := []map[string]interface{}{}
 	result := make(map[string]interface{})
 
 	str := ""
@@ -78,7 +74,7 @@ func flameBurner(input []string) interface{} {
 		if dict_for_flame[flame] != nil {
 			count := dict_for_flame[flame].(int)
 			count++
-			dict_for_flame[flame]=count
+			dict_for_flame[flame] = count
 		} else {
 			dict_for_flame[flame] = 1
 		}
@@ -86,30 +82,20 @@ func flameBurner(input []string) interface{} {
 
 	for flame, dict := range dict_for_flame {
 		li := strings.Split(flame, separate)
-		li = append(li, li[0])
-		li = li[1:]
+		li = append(li[1:], li[0])
 		li_len := len(li)
 		new_li := make([]string, li_len)
+
 		for i, v := range li {
-			new_li[li_len - 1 - i] = v
+			new_li[li_len-1-i] = v
 		}
+
 		children_list = _createJson(new_li, dict.(int), children_list)
 	}
-
-	//log.Println("list:")
-	//log.Println(list_for_flame)
-	//log.Println("dict")
-	//log.Println(dict_for_flame)
-	//for i, j := range dict_for_flame {
-	//	log.Println(i)
-	//	log.Println(j)
-	//}
-
 
 	result["children"] = children_list
 	result["value"] = len(list_for_flame)
 	result["name"] = "root"
-	result["children"] = list_for_flame
 
 	return result
 }
