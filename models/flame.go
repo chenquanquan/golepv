@@ -67,7 +67,10 @@ func flameBurner(input []string) interface{} {
 		}
 
 	}
-	list_for_flame[0] = str
+	if len(list_for_flame) > 1 {
+		list_for_flame[0] = str
+		return nil
+	}
 
 	for _, flame := range list_for_flame {
 		if dict_for_flame[flame] != nil {

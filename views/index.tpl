@@ -623,6 +623,18 @@
     <script>
       // JS with GO
 
+      // Init start
+      var server_ws = new WebSocket('ws://' + window.location.host + '/client');
+
+      server_ws.onmessage = function (e) {
+          var obj = JSON.parse(e.data);
+
+          clean_client_menu();
+          flush_client_list(obj);
+      };
+      // Init end
+
+
       // Clean client menu
       function clean_client_menu() {
           var menu = document.getElementById('collapseDevicesMenu');
@@ -644,20 +656,7 @@
 
       // Add client
       function add_client(client) {
-          var ws = new WebSocket('ws://' + window.location.host + '/client');
-
-          ws.onopen = function() {
-              ws.send('{"addClient":"'+client+'"}');
-          };
-
-          ws.onmessage = function (e) {
-              console.log("Get from server:" + e.data);
-              var objpre = JSON.parse(e.data);
-              var obj = JSON.parse(objpre);
-
-              clean_client_menu();
-              flush_client_list(obj);
-          };
+          server_ws.send('{"addClient":"'+client+'"}');
       }
 
       function onAddDevices() {
@@ -695,59 +694,31 @@
         var method = [];
 
         var cpuStatDonutChart = new CpuStatDonutChart("container-div-cpu-stat-donut", ws, serverToWatch);
-        method.push(cpuStatDonutChart.socket_message_key);
-
         var cpuStatIdleChart = new CpuStatIdleChart("container-div-cpu-stat-idle", ws, serverToWatch);
-        method.push(cpuStatIdleChart.socket_message_key);
-
         var cpuStatUserGroupChart = new CpuStatUserGroupChart("container-div-cpu-stat-user-group", ws, serverToWatch);
-        method.push(cpuStatUserGroupChart.socket_message_key);
-
-
         var cpuIrqGroupChart = new CpuIrqGroupChart("container-div-cpu-stat-irqGroup", ws, serverToWatch);
-        method.push(cpuIrqGroupChart.socket_message_key);
-
         var cpuIrqChart = new CpuIrqChart("container-div-cpu-stat-irq", socket, serverToWatch);
-        method.push(cpuIrqChart.socket_message_key);
 
         var cpuNettxIrqChart = new CpuSoftIrqChart("container-div-cpu-stat-nettxIrq", socket, serverToWatch, 'NET_TX');
-        method.push(cpuNettxIrqChart.socket_message_key);
         var cpuNetrxIrqChart = new CpuSoftIrqChart("container-div-cpu-stat-netrxIrq", socket, serverToWatch, 'NET_RX');
-        method.push(cpuNetrxIrqChart.socket_message_key);
         var cputaskletIrqChart = new CpuSoftIrqChart("container-div-cpu-stat-taskletIrq", socket, serverToWatch, 'TASKLET');
-        method.push(cputaskletIrqChart.socket_message_key);
         var cpuhrtimerIrqChart = new CpuSoftIrqChart("container-div-cpu-stat-hrtimerIrq", socket, serverToWatch, 'HRTIMER');
-        method.push(cpuhrtimerIrqChart.socket_message_key);
 
         var cpuAvgloadChart = new CpuAvgLoadChart("container-div-cpu-avgload", socket, serverToWatch);
-        method.push(cpuAvgloadChart.socket_message_key);
         var cpuTopTable = new CpuTopTable("container-div-cpu-top-table", socket, serverToWatch);
-        method.push(cpuTopTable.socket_message_key);
-
 
 
         var memoryChart = new MemoryChart('container-div-memory-chart', socket, serverToWatch);
-        method.push(memoryChart.socket_message_key);
-
-
-
         var memoryStatTable = new MemoryStatTable('container-memory-stat-table', socket, serverToWatch);
-        method.push(memoryStatTable.socket_message_key);
         var memoryFreePssStatChart = new ProcrankFreeVsPieChart('container-div-memory-free-pss-stat', socket, serverToWatch);
-        method.push(memoryFreePssStatChart.socket_message_key);
         var memoryPssStatChart = new ProcrankPssPieChart('container-div-memory-pss-stat', socket, serverToWatch);
-        method.push(memoryPssStatChart.socket_message_key);
 
 
 
         var ioStatChart = new IOStatChart('container-div-IOCharts', socket, serverToWatch);
-        method.push(ioStatChart.socket_message_key);
         var ioTopTable = new IoTopTable('container-io-top-table', socket, serverToWatch);
-        method.push(ioTopTable.socket_message_key);
         var perfCpuTable = new PerfCpuTable('container-perf-cpu-table', socket, serverToWatch);
-        method.push(perfCpuTable.socket_message_key);
         var perfFlameGraph = new PerfFlameGraph('container-perf-flame-graph',socket, serverToWatch);
-        method.push(perfFlameGraph.socket_message_key);
 
 
         var chartList = {
@@ -757,6 +728,13 @@
             memoryPssStatChart,ioStatChart,ioTopTable, perfCpuTable, perfFlameGraph
         };
 
+        // Add to method
+        for (var i in chartList) {
+            var chart = chartList[i]
+            var key = chart.socket_message_key + "@" + chart.refreshInterval
+            method.push(key)
+        }
+
         var ws = new WebSocket('ws://' +
                                window.location.host +
                                '/monitor');
@@ -764,13 +742,13 @@
         ws.onmessage = function (e) {
             var result = JSON.parse(e.data);
 
-            for (var k in chartList) {
-                var chart = chartList[k]
-                var response = result[chart.socket_message_key];
+            for (var i in chartList) {
+                var chart = chartList[i]
+                var key = chart.socket_message_key + "@" + chart.refreshInterval
+                var response = result[key]
 
                 if (response != null) {
-                    var copy = response;
-                    chart.updateChartData(copy);
+                    chart.updateChartData(response);
                 }
             }
         };
@@ -786,7 +764,6 @@
             var req = '{' +
                 '"method":"' + new_method + '",' +
                 '"server":"' + serverToWatch + '",' +
-                '"interval":"' + 1 + '",' +
                 '"request_id":"' + socket_request_id + '",' +
                 '"request_time":"' + (new Date()).getTime() + '"' +
                 '}';

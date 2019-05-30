@@ -15,57 +15,54 @@ type ClientController struct {
 
 var (
 	clients   = make(map[*websocket.Conn]bool) // Client list
-	broadcast = make(chan bool) // New message flag
 	upgrader = websocket.Upgrader{}
 )
 
-func handleMessages() {
-        for {
-                // Wait new message
-                <-broadcast
-                // Anaylsis command
-                for client := range clients {
-			_, r, err := client.ReadMessage()
-			if err != nil {
-				client.Close()
-				delete(clients, client)
-				continue
-			}
+func writeClientList(client *websocket.Conn) {
+	result := make(map[string]string)
 
-			input := make(map[string]string)
-			err = json.Unmarshal(r, &input)
-			if err != nil {
-				log.Println("Error input:")
-				log.Println(input)
-				client.Close()
-				delete(clients, client)
-			}
+	for i, c := range models.ClientList {
+		key := "addr" + strconv.Itoa(i)
+		result[key] = c.Addr
+	}
 
-			for cmd, v := range input {
-				result := make(map[string]string)
-				switch cmd {
-				case "addClient":
-					models.AddClient(v)
-
-					for i, c := range models.ClientList {
-						key := "addr" + strconv.Itoa(i)
-						result[key] = c.Addr
-					}
-				default:
-					result["error"] = "No this command"
-				}
-				js, _ := json.Marshal(result)
-				_ = client.WriteJSON(string(js))
-			}
-
-			client.Close()
-			delete(clients, client)
-		}
+	err := client.WriteJSON(result)
+	if err != nil {
+		client.Close()
+		delete(clients, client)
 	}
 }
 
-func init() {
-	go handleMessages()
+func clientHandler(client *websocket.Conn) {
+	for {
+		_, r, err := client.ReadMessage()
+		if err != nil {
+			client.Close()
+			delete(clients, client)
+			return
+		}
+
+		input := make(map[string]string)
+		err = json.Unmarshal(r, &input)
+		if err != nil {
+			continue
+		}
+
+		for cmd, v := range input {
+			result := make(map[string]string)
+			switch cmd {
+			case "addClient":
+				models.AddClient(v)
+
+				for c := range clients {
+					writeClientList(c)
+				}
+
+			default:
+				result["error"] = "No this command"
+			}
+		}
+	}
 }
 
 func (c *ClientController) Get() {
@@ -76,8 +73,9 @@ func (c *ClientController) Get() {
 
 	/* add websocket to list */
 	clients[ws] = true
-	broadcast <- true
+	writeClientList(ws)
+	go clientHandler(ws)
 
-	c.ServeJSON() /* Return empty */
+	c.Ctx.Output.SetStatus(200)
 }
 

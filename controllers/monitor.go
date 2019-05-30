@@ -19,67 +19,120 @@ type MonitorController struct {
 type MonitorClient struct {
 	Server string
 	Timer  *time.Timer //time.NewTicker(d time.Duration)
-	Conn   *websocket.Conn
+	Conn   map[*websocket.Conn]bool
 	Method []string
 }
 
 var (
-	mclients = make(map[*websocket.Conn]MonitorClient) // Client list
-	//mbroadcast = make(chan bool)                         // New message flag
+	mclients = make(map[string]MonitorClient) // Client list
 )
 
+func mergeMethod(method, add []string) []string {
+	list := []string{}
+
+	for i := range add {
+		flag := 0
+		for j := range method{
+			if method[j] == add[i] {
+				flag = 1
+				break
+			}
+		}
+		if flag == 0 {
+			list = append(list, add[i])
+		}
+	}
+
+
+	return append(method, list...)
+}
+
 func monitorServer(monitor MonitorClient) {
+	var counter int
+
 	for {
 		<-monitor.Timer.C
 
 		result := make(map[string]interface{})
-		for _, m := range monitor.Method {
-			switch m {
+		keylist := make(map[string]interface{})
+
+		for _, method := range monitor.Method {
+			params := strings.Split(method, "@")
+			if len(params) < 2 {
+				continue
+			}
+
+			key := params[0]
+			interval := params[1]
+
+			i, err := strconv.Atoi(interval)
+			if err != nil {
+				continue
+			}
+
+			if counter % i != 0 {
+				continue
+			}
+
+			if keylist[key] != nil {
+				continue
+			}
+			keylist[key] = true
+
+			switch key {
 			case "cpu.stat":
-				result[m] = models.CpuStat(monitor.Server)
+				result[method] = models.CpuStat(monitor.Server)
 			case "cpu.softirq":
-				result[m] = models.CpuSoftirq(monitor.Server)
+				result[method] = models.CpuSoftirq(monitor.Server)
 			case "cpu.avgload":
-				result[m] = models.CpuAvgload(monitor.Server)
+				result[method] = models.CpuAvgload(monitor.Server)
 			case "cpu.top":
-				result[m] = models.CpuTopOutput(monitor.Server)
+				result[method] = models.CpuTopOutput(monitor.Server)
 			case "memory.status":
-				result[m] = models.MemStatus(monitor.Server)
+				result[method] = models.MemStatus(monitor.Server)
 			case "memory.procrank":
-				result[m] = models.MemProcrank(monitor.Server)
+				result[method] = models.MemProcrank(monitor.Server)
 			case "io.status":
-				result[m] = models.IoStatus(monitor.Server)
+				result[method] = models.IoStatus(monitor.Server)
 			case "io.top":
-				result[m] = models.IoTop(monitor.Server)
+				result[method] = models.IoTop(monitor.Server)
 			case "perf.cpuclock":
-				result[m] = models.PerfCpuClock(monitor.Server)
+				result[method] = models.PerfCpuClock(monitor.Server)
 			case "perf.flame":
-				result[m] = models.PerfFlame(monitor.Server)
+				result[method] = models.PerfFlame(monitor.Server)
 			default:
 			}
 		}
 
 		result["time"] = time.Now().UnixNano()
+		result["client"] = monitor.Server
 
-		client := monitor.Conn
-		err := client.WriteJSON(result)
-		if err != nil {
-			client.Close()
-			delete(mclients, client)
+		for client := range monitor.Conn {
+			err := client.WriteJSON(result)
+			if err != nil {
+				client.Close()
+				monitor.Conn[client] = false
+				delete(monitor.Conn, client)
 
+				continue
+			}
+		}
+
+		if len(monitor.Conn) == 0 {
 			return
 		}
 
+		counter++
 		monitor.Timer.Reset(2 * time.Second)
 	}
 }
 
-func monitorHandle(client *websocket.Conn, monitor MonitorClient) {
+
+func monitorHandle(client *websocket.Conn) {
 	for {
 		_, r, err := client.ReadMessage()
 		if err != nil {
 			client.Close()
-			delete(mclients, client)
 			return
 		}
 
@@ -89,23 +142,30 @@ func monitorHandle(client *websocket.Conn, monitor MonitorClient) {
 			log.Println("Error input:")
 			log.Println(input)
 			client.Close()
-			delete(mclients, client)
+			return
 		}
 
-		monitor.Conn = client
+		server := input["server"]
+		method := strings.Split(input["method"], ",")
+
+		for s, m := range mclients { // server, monitor
+			if s == server {
+				m.Conn[client] = true
+				m.Method = mergeMethod(m.Method, method)
+				return
+			}
+		}
+
+
+		// Create a new monitor
+		var monitor MonitorClient
+		monitor.Conn = make(map[*websocket.Conn]bool)
+		monitor.Conn[client] = true
 		monitor.Server = input["server"]
 		monitor.Method = strings.Split(input["method"], ",")
+		monitor.Timer = time.NewTimer(time.Second)
 
-		if monitor.Timer == nil {
-			sec, err := strconv.Atoi(input["interval"])
-			if err == nil {
-				monitor.Timer = time.NewTimer(time.Second *
-					time.Duration(sec))
-
-				go monitorServer(monitor)
-			}
-
-		}
+		go monitorServer(monitor)
 	}
 }
 
@@ -115,11 +175,7 @@ func (c *MonitorController) Get() {
 		log.Fatal(err)
 	}
 
-	/* add websocket to list */
-	mclients[ws] = MonitorClient{Timer: nil}
-	//mbroadcast <- true
-
-	go monitorHandle(ws, mclients[ws])
+	go monitorHandle(ws)
 
 	//c.ServeJSON() /* Return empty */
 	c.Ctx.Output.SetStatus(200)
