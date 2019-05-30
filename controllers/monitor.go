@@ -164,6 +164,7 @@ func monitorHandle(client *websocket.Conn) {
 		monitor.Server = input["server"]
 		monitor.Method = strings.Split(input["method"], ",")
 		monitor.Timer = time.NewTimer(time.Second)
+		mclients[server] = monitor
 
 		go monitorServer(monitor)
 	}
