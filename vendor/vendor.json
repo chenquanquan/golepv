@@ -75,6 +75,12 @@
 			"revisionTime": "2018-11-10T20:28:10Z"
 		},
 		{
+			"checksumSHA1": "9hQcE6zcN+weJ4BLgL34hl3OyCw=",
+			"path": "github.com/looplab/fsm",
+			"revision": "84b5307469f859464403f80919467950a79de1b1",
+			"revisionTime": "2019-01-16T16:00:11Z"
+		},
+		{
 			"checksumSHA1": "v5CCEZdC63TIkIL8TUeURBcZzNc=",
 			"path": "github.com/shiena/ansicolor",
 			"revision": "a422bbe96644373c5753384a59d678f7d261ff10",
@@ -121,6 +127,18 @@
 			"path": "github.com/smartystreets/goconvey/convey/reporting",
 			"revision": "68dc04aab96ae4326137d6b77330c224063a927e",
 			"revisionTime": "2019-03-30T03:26:15Z"
+		},
+		{
+			"checksumSHA1": "wVmqWYvPPiqBNJ+E43A+ge3IMkI=",
+			"path": "github.com/spiermar/burn/convert",
+			"revision": "c7d0b3c35ffb8e20e0910525ac92c0ad39dd4ae4",
+			"revisionTime": "2019-01-21T20:09:38Z"
+		},
+		{
+			"checksumSHA1": "j+Nav4sPRmi8HCApxHRNEqeCKOQ=",
+			"path": "github.com/spiermar/burn/types",
+			"revision": "c7d0b3c35ffb8e20e0910525ac92c0ad39dd4ae4",
+			"revisionTime": "2019-01-21T20:09:38Z"
 		},
 		{
 			"checksumSHA1": "31Q46st1pd0VJJmD7yQFHKB8jrE=",

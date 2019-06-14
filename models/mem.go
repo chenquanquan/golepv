@@ -96,18 +96,21 @@ func MemProcrank(client string) map[string]interface{} {
 	}
 
 	// now parse from end, which contains summary info
-	last_line := response_lines[len(response_lines)-2]
+	last_line := response_lines[len(response_lines)-1]
 	last_line = strings.ReplaceAll(last_line, "RAM:", "")
 	last_values := strings.Split(last_line, ", ")
 	for _, value := range last_values {
 		kv := strings.Fields(value)
+		if len(kv) < 2 {
+			return nil
+		}
 		name := strings.Trim(kv[1], " ")
 		value := strings.Trim(kv[0], " ")
 		procrank_sum[name+"Unit"] = string(value[len(value)-1])
 		procrank_sum[name] = value[:len(value)-1]
 	}
 
-	xss_sum_line := response_lines[len(response_lines)-4]
+	xss_sum_line := response_lines[len(response_lines)-3]
 	xss_total := strings.Fields(xss_sum_line)
 
 	uss := xss_total[0]

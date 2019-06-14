@@ -1,7 +1,7 @@
 package models
 
 import (
-	"log"
+	//"log"
 	"strings"
 	"time"
 )
@@ -77,10 +77,10 @@ func IoTop(client string) map[string]interface{} {
 		return nil
 	}
 
-	for i, line := range response_lines {
-		log.Println(i)
-		log.Println(line)
-	}
+	//for i, line := range response_lines {
+	//	log.Println(i)
+	//	log.Println(line)
+	//}
 
 	return nil
 }

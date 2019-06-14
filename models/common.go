@@ -1,10 +1,14 @@
 package models
 
 import (
+	//"bytes"
+	"io/ioutil"
 	"encoding/json"
 	"log"
 	"net"
 	"strings"
+	//"compress/zlib"
+	//"errors"
 )
 
 //"github.com/astaxie/beego"
@@ -14,12 +18,12 @@ type Client struct {
 }
 
 var (
-	bufferLen  int
 	ClientList []Client
+	endString string
 )
 
 func init() {
-	bufferLen = 1024 * 1024
+	endString = "lepdendstring"
 }
 
 func AddClient(addr string) {
@@ -45,21 +49,20 @@ func ClientResponse(server, method string) (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer conn.Close()
 
 	_, err = conn.Write([]byte(sbody))
 	if err != nil {
 		return nil, err
 	}
 
-	message := make([]byte, bufferLen)
-	len, err := conn.Read(message)
+	message, err := ioutil.ReadAll(conn)//buf.Bytes()
 	if err != nil {
 		return nil, err
 	}
-	conn.Close()
 
 	ret := make(map[string]interface{})
-	err = json.Unmarshal(message[:len], &ret)
+	err = json.Unmarshal(message, &ret)
 	if err != nil {
 		log.Println(err.Error())
 	}
@@ -80,9 +83,11 @@ func ClientResponseResult(client, method string) string {
 
 	result := response["result"].(string)
 
-	if result == "" {
+	p := strings.Index(result, endString)
+	if p <= 0 {
 		return ""
 	}
+	result = result[0: p - 1]
 
 	return result
 }
@@ -99,6 +104,12 @@ func ClientResponseString(client, method string) []string {
 	}
 
 	result := response["result"].(string)
+	p := strings.Index(result, endString)
+	if p <= 0 {
+		return nil
+	}
+
+	result = result[0: p - 1]
 	response_lines := strings.Split(result, "\n")
 
 	if len(response_lines) == 0 {
