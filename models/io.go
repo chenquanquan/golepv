@@ -69,7 +69,6 @@ func IoStatus(client string) map[string]interface{} {
 	return stat_ret
 }
 
-// TODO: no work
 func IoTop(client string) map[string]interface{} {
 	lepd_command := "GetCmdIotop"
 	response_lines := ClientResponseString(client, lepd_command)

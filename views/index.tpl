@@ -145,6 +145,9 @@
               <li>
                 <a href="#container-io-top-table">Top</a>
               </li>
+              <li>
+                <a href="#container-jnet-top-table">Net</a>
+              </li>
           </ul>
         </li>
 
@@ -457,6 +460,16 @@
       </div>
 
       <div class="col-md-12">
+        <div id="container-jnet-top-table" class="card mb-3">
+          <div class="card-header">
+            <i class="icon-syncalt"></i> Net Top Table
+          </div>
+          <div class="card-body"><table class="display compact chart-panel" cellspacing="0"></table></div>
+          <div class="card-footer small text-muted" hidden><i class="fa fa-bell" aria-hidden="true"> </i></div>
+        </div>
+      </div>
+
+      <div class="col-md-12">
           <div id="container-perf-cpu-table" class="card mb-3">
             <div class="card-header">
                 <i class="glyphicon glyphicon-tasks"></i>
@@ -717,6 +730,9 @@
 
         var ioStatChart = new IOStatChart('container-div-IOCharts', socket, serverToWatch);
         var ioTopTable = new IoTopTable('container-io-top-table', socket, serverToWatch);
+
+        var jnetTopTable = new IoTopTable('container-jnet-top-table', socket, serverToWatch);
+
         var perfCpuTable = new PerfCpuTable('container-perf-cpu-table', socket, serverToWatch);
         var perfFlameGraph = new PerfFlameGraph('container-perf-flame-graph',socket, serverToWatch);
 
@@ -725,7 +741,10 @@
             cpuStatDonutChart,cpuStatIdleChart,cpuStatUserGroupChart,cpuIrqGroupChart,
             cpuIrqChart,cpuNettxIrqChart,cpuNetrxIrqChart,cputaskletIrqChart,cpuhrtimerIrqChart,
             cpuAvgloadChart,cpuTopTable,memoryChart,memoryStatTable,memoryFreePssStatChart,
-            memoryPssStatChart,ioStatChart,ioTopTable, perfCpuTable, perfFlameGraph
+            memoryPssStatChart,ioStatChart,ioTopTable,
+            jnetTopTable,
+
+            perfCpuTable, perfFlameGraph
         };
 
         // Add to method

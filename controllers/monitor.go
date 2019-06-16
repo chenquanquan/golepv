@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"log"
 	"strconv"
+	"sync"
 	"strings"
 	"time"
+	"container/list"
 
 	"github.com/astaxie/beego"
 	"github.com/chenquanquan/golepv/models"
@@ -16,16 +18,32 @@ type MonitorController struct {
 	beego.Controller
 }
 
+type webConn struct {
+	Connected bool
+	Mux sync.Mutex
+}
+
 type MonitorClient struct {
 	Server string
-	Timer  *time.Timer //time.NewTicker(d time.Duration)
-	Conn   map[*websocket.Conn]bool
+	LepdTimer  *time.Timer //time.NewTicker(d time.Duration)
+	WebTimer  *time.Timer //time.NewTicker(d time.Duration)
+	Conn   map[*websocket.Conn]webConn
 	Method []string
 }
 
+type LepdFunc func (client string) map[string]interface{}
+
 var (
 	mclients = make(map[string]MonitorClient) // Client list
+	//dataResult = make(chan map[string]interface{})
+	resultFlag = make(chan bool)
+	listResult *list.List
+	listMutex sync.Mutex
 )
+
+func init() {
+	listResult = list.New()
+}
 
 func mergeMethod(method, add []string) []string {
 	list := []string{}
@@ -47,13 +65,74 @@ func mergeMethod(method, add []string) []string {
 	return append(method, list...)
 }
 
-func monitorServer(monitor MonitorClient) {
+func getLepd(method, server string, f LepdFunc) {
+	result := make(map[string]interface{})
+
+
+	result[method] = f(server)
+	//log.Printf("get :%s, len :%d", method, len(method))
+
+	listMutex.Lock()
+	listResult.PushBack(result)
+	listMutex.Unlock()
+}
+
+func monitorWebServer(monitor MonitorClient) {
+	for {
+		<-monitor.WebTimer.C
+
+		//log.Printf("Web server len: %d", listResult.Len())
+
+		result := make(map[string]interface{})
+
+		listMutex.Lock()
+		for listResult.Len() > 0 {
+			e := listResult.Front() // First element
+
+			item := e.Value.(map[string]interface{})
+			/* merge result */
+			for k, v := range item {
+				result[k] = v
+			}
+
+			listResult.Remove(e) // Dequeue
+		}
+		listMutex.Unlock()
+
+
+		result["time"] = time.Now().UnixNano()
+		result["client"] = monitor.Server
+
+		for client, wc:= range monitor.Conn {
+			wc.Mux.Lock()
+			err := client.WriteJSON(result)
+			wc.Mux.Unlock()
+			if err != nil {
+				client.Close()
+				wc := monitor.Conn[client]
+				wc.Connected = false
+				delete(monitor.Conn, client)
+
+				continue
+			}
+		}
+
+		if len(monitor.Conn) == 0 {
+			log.Println("Web connect break")
+			return
+		}
+
+		monitor.WebTimer.Reset(time.Second)
+	}
+}
+
+func monitorLepdServer(monitor MonitorClient) {
 	var counter int
 
 	for {
-		<-monitor.Timer.C
+		<-monitor.LepdTimer.C
 
-		result := make(map[string]interface{})
+		server := monitor.Server
 		keylist := make(map[string]interface{})
 
 		for _, method := range monitor.Method {
@@ -81,49 +160,36 @@ func monitorServer(monitor MonitorClient) {
 
 			switch key {
 			case "cpu.stat":
-				result[method] = models.CpuStat(monitor.Server)
+				go getLepd(method, server, models.CpuStat)
 			case "cpu.softirq":
-				result[method] = models.CpuSoftirq(monitor.Server)
+				go getLepd(method, server, models.CpuSoftirq)
 			case "cpu.avgload":
-				result[method] = models.CpuAvgload(monitor.Server)
+				go getLepd(method, server, models.CpuAvgload)
 			case "cpu.top":
-				result[method] = models.CpuTopOutput(monitor.Server)
+				go getLepd(method, server, models.CpuTopOutput)
 			case "memory.status":
-				result[method] = models.MemStatus(monitor.Server)
+				go getLepd(method, server, models.MemStatus)
 			case "memory.procrank":
-				result[method] = models.MemProcrank(monitor.Server)
+				go getLepd(method, server, models.MemProcrank)
 			case "io.status":
-				result[method] = models.IoStatus(monitor.Server)
+				go getLepd(method, server, models.IoStatus)
 			case "io.top":
-				result[method] = models.IoTop(monitor.Server)
+				go getLepd(method, server, models.IoTop)
 			case "perf.cpuclock":
-				result[method] = models.PerfCpuClock(monitor.Server)
+				go getLepd(method, server, models.PerfCpuClock)
 			case "perf.flame":
-				result[method] = models.PerfFlame(monitor.Server)
+				go getLepd(method, server, models.PerfFlame)
 			default:
 			}
 		}
 
-		result["time"] = time.Now().UnixNano()
-		result["client"] = monitor.Server
-
-		for client := range monitor.Conn {
-			err := client.WriteJSON(result)
-			if err != nil {
-				client.Close()
-				monitor.Conn[client] = false
-				delete(monitor.Conn, client)
-
-				continue
-			}
-		}
-
 		if len(monitor.Conn) == 0 {
+			log.Println("Lepd connect break")
 			return
 		}
 
 		counter++
-		monitor.Timer.Reset(2 * time.Second)
+		monitor.LepdTimer.Reset(time.Second)
 	}
 }
 
@@ -150,7 +216,8 @@ func monitorHandle(client *websocket.Conn) {
 
 		for s, m := range mclients { // server, monitor
 			if s == server {
-				m.Conn[client] = true
+				wc := m.Conn[client]
+				wc.Connected = true
 				m.Method = mergeMethod(m.Method, method)
 				return
 			}
@@ -159,14 +226,20 @@ func monitorHandle(client *websocket.Conn) {
 
 		// Create a new monitor
 		var monitor MonitorClient
-		monitor.Conn = make(map[*websocket.Conn]bool)
-		monitor.Conn[client] = true
+		monitor.Conn = make(map[*websocket.Conn]webConn)
+		var wc webConn
+		//wc := monitor.Conn[client]
+		wc.Connected = true
+		monitor.Conn[client]=wc
+
 		monitor.Server = input["server"]
 		monitor.Method = strings.Split(input["method"], ",")
-		monitor.Timer = time.NewTimer(time.Second)
+		monitor.LepdTimer = time.NewTimer(time.Second)
+		monitor.WebTimer = time.NewTimer(time.Second)
 		mclients[server] = monitor
 
-		go monitorServer(monitor)
+		go monitorWebServer(monitor)
+		go monitorLepdServer(monitor)
 	}
 }
 
