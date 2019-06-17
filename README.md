@@ -6,16 +6,13 @@ This project is to re-implement [LEPV](https://github.com/linuxep/lepv) with gol
 - Windows/Mac OX/Linux, either works
 
 ## Technology Keywords
-- Git
 - Golang
 - Beego
 - Javascript
-- Restful API
-- Web charts
 - WebSocket
 
 ## Software Tools
-    1. Golang
+    Golang
    
 ## Start
   
@@ -32,9 +29,3 @@ $ golepv
 
 3. Open browser [127.0.0.1:8080](http://127.0.0.1:8080)
 
-
-## TODO
-
-* Memory Pss Donut Chart
-* I/O Top Table
-* Flame Graph

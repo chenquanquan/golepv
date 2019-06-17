@@ -1,7 +1,6 @@
 package models
 
 import (
-	"log"
 	"strings"
 	"time"
 	"regexp"
@@ -79,7 +78,8 @@ func IoTop(client string) map[string]interface{} {
 
 	reg := regexp.MustCompile("\\s+")
 
-	var totalline, actualline, headline string
+	//var totalline, actualline string
+	var headline string
 	var values_lines []string
 	for i, line := range response_lines {
 		if strings.Contains(line, "Total DISK READ") {
@@ -88,8 +88,8 @@ func IoTop(client string) map[string]interface{} {
 			 * Actual DISK READ:       0.00 B/s | Actual DISK WRITE:       0.00 B/s
 			 *   TID  PRIO  USER     DISK READ  DISK WRITE  SWAPIN      IO    COMMAND
 			 */
-			totalline = response_lines[0]
-			actualline = response_lines[1]
+			//totalline = response_lines[0]
+			//actualline = response_lines[1]
 			headline = response_lines[2]
 			values_lines = response_lines[i+3:]
 		}
@@ -131,5 +131,55 @@ func IoTop(client string) map[string]interface{} {
 }
 
 func JnetTop(client string) map[string]interface{} {
-	return nil
+	lepd_command := "GetCmdJnettop"
+	response_lines := ClientResponseString(client, lepd_command)
+	if response_lines == nil {
+		return nil
+	}
+
+	index := make(map[int]interface{})
+	for i, line := range response_lines {
+		item := make(map[string]interface{})
+
+		line = strings.Trim(line, " ")
+		values := strings.Split(line, ",")
+
+		if (len(values) < 20) {
+			continue
+		}
+
+		/* jnettop --display text -t 5 --format
+		   $src$,$srcname$,$srcport$,$srcbytes$,$srcpackets$,
+		   $srcbps$,$srcpps$,$dst$,$dstname$,$dstport$,
+		   $dstbytes$,$dstpackets$,$dstbps$,$dstpps$,$proto$,
+		   $totalbytes$,$totalpackets$,$totalbps$,$totalpps$,$filterdata$
+		 */
+		item["Src"] = values[0]
+		item["Src name"] = values[1]
+		item["Src port"] = values[2]
+		item["Src bytes"] = values[3]
+		item["Src packets"] = values[4]
+		item["Src bps"] = values[5]
+		item["Src pps"] = values[6]
+		item["Dst"] = values[7]
+		item["Dst name"] = values[8]
+		item["Dst port"] = values[9]
+		item["Dst bytes"] = values[10]
+		item["Dst packets"] = values[11]
+		item["Dst bps"] = values[12]
+		item["Dst pps"] = values[13]
+		item["Proto"] = values[14]
+		item["Total bytes"] = values[15]
+		item["Total packets"] = values[16]
+		item["Total bps"] = values[17]
+		item["Total pps"] = values[18]
+		item["Filter data"] = values[19]
+
+		index[i] = item
+	}
+
+	result := make(map[string]interface{})
+	result["data"] = index
+
+	return result
 }

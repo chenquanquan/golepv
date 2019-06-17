@@ -564,6 +564,7 @@
     <script src="/static/js/charts/io/ioStatChart.js"></script>
     <script src="/static/js/charts/io/ioGauguChart.js"></script>
     <script src="/static/js/charts/io/ioTopTable.js"></script>
+    <script src="/static/js/charts/io/jnetTopTable.js"></script>
 
     <script src="/static/js/charts/perf/perfCpuTable.js"></script>
 
@@ -731,7 +732,7 @@
         var ioStatChart = new IOStatChart('container-div-IOCharts', socket, serverToWatch);
         var ioTopTable = new IoTopTable('container-io-top-table', socket, serverToWatch);
 
-        var jnetTopTable = new IoTopTable('container-jnet-top-table', socket, serverToWatch);
+        var jnetTopTable = new JnetTopTable('container-jnet-top-table', socket, serverToWatch);
 
         var perfCpuTable = new PerfCpuTable('container-perf-cpu-table', socket, serverToWatch);
         var perfFlameGraph = new PerfFlameGraph('container-perf-flame-graph',socket, serverToWatch);
@@ -741,9 +742,7 @@
             cpuStatDonutChart,cpuStatIdleChart,cpuStatUserGroupChart,cpuIrqGroupChart,
             cpuIrqChart,cpuNettxIrqChart,cpuNetrxIrqChart,cputaskletIrqChart,cpuhrtimerIrqChart,
             cpuAvgloadChart,cpuTopTable,memoryChart,memoryStatTable,memoryFreePssStatChart,
-            memoryPssStatChart,ioStatChart,ioTopTable,
-            jnetTopTable,
-
+            memoryPssStatChart,ioStatChart,ioTopTable, jnetTopTable,
             perfCpuTable, perfFlameGraph
         };
 
