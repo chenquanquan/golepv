@@ -1,9 +1,10 @@
 package models
 
 import (
-	//"log"
+	"log"
 	"strings"
 	"time"
+	"regexp"
 )
 
 func getIostatResult(client string) []string {
@@ -76,10 +77,59 @@ func IoTop(client string) map[string]interface{} {
 		return nil
 	}
 
-	//for i, line := range response_lines {
-	//	log.Println(i)
-	//	log.Println(line)
-	//}
+	reg := regexp.MustCompile("\\s+")
 
+	var totalline, actualline, headline string
+	var values_lines []string
+	for i, line := range response_lines {
+		if strings.Contains(line, "Total DISK READ") {
+			/* head line like this:
+			 * Total DISK READ :       0.00 B/s | Total DISK WRITE :       5.42 M/s
+			 * Actual DISK READ:       0.00 B/s | Actual DISK WRITE:       0.00 B/s
+			 *   TID  PRIO  USER     DISK READ  DISK WRITE  SWAPIN      IO    COMMAND
+			 */
+			totalline = response_lines[0]
+			actualline = response_lines[1]
+			headline = response_lines[2]
+			values_lines = response_lines[i+3:]
+		}
+	}
+
+	headline = strings.Trim(headline, " ")
+	headline = reg.ReplaceAllString(headline, " ")
+	//title := strings.Split(headline, " ")
+	//title_len := len(title)
+
+	index := make(map[int]interface{})
+	for i, line := range values_lines {
+		item := make(map[string]interface{})
+
+		line = strings.Trim(line, " ")
+		line = reg.ReplaceAllString(line, " ")
+		values := strings.Split(line, " ")
+
+		if (len(values) < 11) {
+			continue
+		}
+
+		item["TID"] = values[0]
+                item["PRIO"] = values[1]
+                item["USER"] = values[2]
+                item["READ"] = strings.Join(values[3:5], " ")
+                item["WRITE"] = strings.Join(values[5:7], " ")
+                item["SWAPIN"] = strings.Join(values[7:9], " ")
+                item["IO"] = strings.Join(values[9:11], " ")
+                item["COMMAND"] = strings.Join(values[11:], " ")
+
+		index[i] = item
+	}
+
+	result := make(map[string]interface{})
+	result["data"] = index
+
+	return result
+}
+
+func JnetTop(client string) map[string]interface{} {
 	return nil
 }

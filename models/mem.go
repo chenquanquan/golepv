@@ -24,9 +24,7 @@ func MemStatus(client string) map[string]interface{} {
 
 	for _, line := range response_lines {
 		line = strings.Trim(line, " ")
-		if line == "lepdendstring" {
-			break
-		}
+
 		linePairs := strings.Split(line, ":")
 		lineKey := strings.Trim(linePairs[0], " ")
 		lineValue := strings.ReplaceAll(linePairs[1], "kB", " ")

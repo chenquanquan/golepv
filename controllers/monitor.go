@@ -175,6 +175,8 @@ func monitorLepdServer(monitor MonitorClient) {
 				go getLepd(method, server, models.IoStatus)
 			case "io.top":
 				go getLepd(method, server, models.IoTop)
+			case "io.jnet":
+				go getLepd(method, server, models.JnetTop)
 			case "perf.cpuclock":
 				go getLepd(method, server, models.PerfCpuClock)
 			case "perf.flame":

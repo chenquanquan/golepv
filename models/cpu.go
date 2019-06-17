@@ -159,9 +159,6 @@ func CpuTopOutput(client string) map[string]interface{} {
 	top := make(map[string]interface{})
 	for index, line := range response_lines {
 		line = strings.Trim(line, " ")
-		if line == "lepdendstring" {
-			break
-		}
 
 		values := strings.Fields(line)
 
