@@ -1,9 +1,9 @@
 package models
 
 import (
+	"regexp"
 	"strings"
 	"time"
-	"regexp"
 )
 
 func getIostatResult(client string) []string {
@@ -77,9 +77,8 @@ func IoTop(client string) map[string]interface{} {
 	}
 
 	reg := regexp.MustCompile("\\s+")
-
 	//var totalline, actualline string
-	var headline string
+	//var headline string
 	var values_lines []string
 	for i, line := range response_lines {
 		if strings.Contains(line, "Total DISK READ") {
@@ -90,13 +89,13 @@ func IoTop(client string) map[string]interface{} {
 			 */
 			//totalline = response_lines[0]
 			//actualline = response_lines[1]
-			headline = response_lines[2]
+			//headline = response_lines[2]
 			values_lines = response_lines[i+3:]
 		}
 	}
 
-	headline = strings.Trim(headline, " ")
-	headline = reg.ReplaceAllString(headline, " ")
+	//headline = strings.Trim(headline, " ")
+	//headline = reg.ReplaceAllString(headline, " ")
 	//title := strings.Split(headline, " ")
 	//title_len := len(title)
 
@@ -108,18 +107,18 @@ func IoTop(client string) map[string]interface{} {
 		line = reg.ReplaceAllString(line, " ")
 		values := strings.Split(line, " ")
 
-		if (len(values) < 11) {
+		if len(values) < 11 {
 			continue
 		}
 
 		item["TID"] = values[0]
-                item["PRIO"] = values[1]
-                item["USER"] = values[2]
-                item["READ"] = strings.Join(values[3:5], " ")
-                item["WRITE"] = strings.Join(values[5:7], " ")
-                item["SWAPIN"] = strings.Join(values[7:9], " ")
-                item["IO"] = strings.Join(values[9:11], " ")
-                item["COMMAND"] = strings.Join(values[11:], " ")
+		item["PRIO"] = values[1]
+		item["USER"] = values[2]
+		item["READ"] = strings.Join(values[3:5], " ")
+		item["WRITE"] = strings.Join(values[5:7], " ")
+		item["SWAPIN"] = strings.Join(values[7:9], " ")
+		item["IO"] = strings.Join(values[9:11], " ")
+		item["COMMAND"] = strings.Join(values[11:], " ")
 
 		index[i] = item
 	}
@@ -144,7 +143,7 @@ func JnetTop(client string) map[string]interface{} {
 		line = strings.Trim(line, " ")
 		values := strings.Split(line, ",")
 
-		if (len(values) < 20) {
+		if len(values) < 20 {
 			continue
 		}
 
@@ -153,7 +152,7 @@ func JnetTop(client string) map[string]interface{} {
 		   $srcbps$,$srcpps$,$dst$,$dstname$,$dstport$,
 		   $dstbytes$,$dstpackets$,$dstbps$,$dstpps$,$proto$,
 		   $totalbytes$,$totalpackets$,$totalbps$,$totalpps$,$filterdata$
-		 */
+		*/
 		item["Src"] = values[0]
 		item["Src name"] = values[1]
 		item["Src port"] = values[2]

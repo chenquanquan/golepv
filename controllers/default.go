@@ -86,7 +86,7 @@ func addClient(in string)(out string){
 }
 
 func initFuncMap() {
-	beego.AddFuncMap("addClient", addClient)
+	_ = beego.AddFuncMap("addClient", addClient)
 }
 
 func init() {
